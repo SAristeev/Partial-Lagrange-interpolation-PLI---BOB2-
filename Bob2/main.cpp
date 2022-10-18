@@ -86,6 +86,10 @@ int main(){
 	resREL_2norm = resABS_2norm / f_2norm;
 	resREL_infnorm = resABS_infnorm / f_infnorm;
 
+
+	//
+	// ++++++++++++++++++++++++++++++++++++=
+	//
 	std::ofstream ParamsFile;
 	ParamsFile.open("Params.txt");
 	ParamsFile << a << ", " << b << ", "
