@@ -27,9 +27,11 @@ int main(){
 	for (int i = 0; i < Mviz; i++) {
 		X[i] = a + i * (b - a) / (Mviz - 1); // заполняем точки, по которым строим график
 	}
-	double resABS_1norm = 0, resABS_2norm = 0, resABS_infnorm = 0;
-	double resREL_1norm = 0, resREL_2norm = 0, resREL_infnorm = 0;
-	double f_1norm = 0, f_2norm = 0, f_infnorm = 0;
+	// Residual - остаток
+	double resABS_1norm = 0, resABS_2norm = 0, resABS_infnorm = 0; // абсолютная погрешность в L1, L2 и Linf нормах
+	double resREL_1norm = 0, resREL_2norm = 0, resREL_infnorm = 0; // относительная погрешность в L1, L2 и Linf нормах
+	double f_1norm = 0, f_2norm = 0, f_infnorm = 0; // относительная погрешность = абсоютная погрешность \ норма f
+
 	int iviz = 0; // Счетчик для массива-графика
 	for (int i = 0; i < K; i++) {
 		double D[N];
@@ -37,67 +39,89 @@ int main(){
 			D[j] = 1;
 			for (int k = 0; k < N; k++) {
 				if(k!=j){
+					// mesh[i * (N - 1) + j] - j-ая точка на i-ом интервале
+					// mesh[i * (N - 1) + k] - k-ая точка на i-ом интервале
 					D[j] *= mesh[i * (N - 1) + j] - mesh[i * (N - 1) + k]; // Смещенная индексация из-за того, что вычисляем на разных интервалах
 				}
 			}
 		}
-	
+		// Массив X[Mviz] и mesh[M] вообще говоря не совпадают
+		// Поэтому для каждого из K интервалов
+		// начало i-ого инервала mesh[i * (N - 1)]
+		// конец i-ого инервала  mesh[(i + 1) * (N - 1)]
+		// Тогда будем подставлять в интерполяционный многочлен только те точки,
+		// у которых X[iviz] <= mesh[(i + 1) * (N - 1)], те попадают в этот i-ый интервал
+		// + ограничение на iviz < Mviz - на случай, если мы можем выйти из массива
 		for (; X[iviz] <= mesh[(i + 1) * (N - 1)] && iviz < Mviz; iviz++) {
 			double tmp = 0;
 			for (int j = 0; j < N; j++) {
 				double multiplication = f(X[iviz]);
 				for (int k = 0; k < N; k++) {
 					if (k != j) {
+						// X[viz] - точка в котором считаем значение полинома
+						// mesh[i * (N - 1) + k] - k-ая точка на i-ом интервале
 						multiplication *= (X[iviz] - mesh[i * (N - 1) + k]);
 					}
 				}
 				tmp += multiplication / D[j];
 			}
-			L[iviz] = tmp;
+			L[iviz] = tmp; // подсчет значения полинома Лагранжа в точке X[iviz] - аналогично задаче как в первой задаче
 		}
 
-		for (int l = 0; l < 100; l++) {
-			double x = mesh[i * (N - 1)] + l * h / 100;
+		// подсчет нормы
+		for (int l = 0; l < 100; l++) { // шаг h/100
+			double x = mesh[i * (N - 1)] + l * h / 100; // здесь x - какая-то фиксированная точка на K-ом отрезке
 			double tmp = 0;
 			for (int j = 0; j < N; j++) {
 				double multiplication = f(x);
 				for (int k = 0; k < N; k++) {
 					if (k != j) {
+						// аналогично
+						// mesh[i * (N - 1) + k] - k-ая точка на i-ом интервале
 						multiplication *= (x - mesh[i * (N - 1) + k]);
 					}
 				}
 				tmp += multiplication / D[j];
 			}
-			resABS_1norm += abs(tmp - f(x));
-			f_1norm += abs(f(x));
-			resABS_2norm += (tmp - f(x)) * (tmp - f(x));
-			f_2norm += f(x) * f(x);
-			if (tmp - f(x) > resABS_infnorm) {
-				resABS_infnorm = tmp - f(x);
+			// в итоге tmp - значение полинома в точке x
+			// Вычисляем норму аддитивно
+			// То есть я вычисляю норму (в случае L2 только сумму квадратов, корень потом возьму)
+			// На каждом из интервалов и складываем результат
+			resABS_1norm += abs(tmp - f(x)); // L1 норма разницы функции и полинома Лагранжа в точке x
+			f_1norm += abs(f(x)); // L1 норма функции в точке x
+
+			resABS_2norm += (tmp - f(x)) * (tmp - f(x)); // Сумма квадратов разницы функции и полинома Лагранжа в точке x
+			f_2norm += f(x) * f(x); // Сумма квадратов функции в точке x
+
+			if (tmp - f(x) > resABS_infnorm) { // Linf - берем максимум, ничего не суммируем
+				resABS_infnorm = tmp - f(x); // разница функции и полинома Лагранжа в точке x
 			}
 			if (f(x) > f_infnorm) {
-				f_infnorm = f(x);
+				f_infnorm = f(x); // функция 
 			}
 		}
 	}
-	resABS_2norm = sqrt(resABS_2norm);
-	f_2norm = sqrt(f_2norm);
+
+	resABS_2norm = sqrt(resABS_2norm); // Теперь берем корень из суммы квадратов - L2 норма для разницы функции и полинома Лагранжа в точке x
+	f_2norm = sqrt(f_2norm); // L2 норма для функции
+
+	// относительная погрешность = абсоютная погрешность \ норма f
+
 	resREL_1norm = resABS_1norm / f_1norm;
 	resREL_2norm = resABS_2norm / f_2norm;
 	resREL_infnorm = resABS_infnorm / f_infnorm;
 
 
-	//
-	// ++++++++++++++++++++++++++++++++++++=
-	//
-	std::ofstream ParamsFile;
+	// Запись в файлы
+
+	std::ofstream ParamsFile; // файл параметров - в нем a,b и все нормы
 	ParamsFile.open("Params.txt");
 	ParamsFile << a << ", " << b << ", "
 		<< resREL_1norm << ", " << resREL_2norm << ", " << resREL_infnorm << ", "
 		<< resABS_1norm << ", " << resABS_2norm << ", " << resABS_infnorm << std::endl;
 	ParamsFile.close();
 
-	std::ofstream meshFile, FmeshFile;
+	std::ofstream meshFile, FmeshFile; // файлы точек интерполяции и значения функции в этих точках - для выделения красным
 	meshFile.open("mesh.txt");
 	FmeshFile.open("Fmesh.txt");
 	for (int i = 0; i < M - 1; i++) {
@@ -109,10 +133,10 @@ int main(){
 	meshFile.close();
 	FmeshFile.close();
 
-	std::ofstream XFile, LFile, FFile;
-	XFile.open("X.txt");
-	LFile.open("L.txt");
-	FFile.open("F.txt");
+	std::ofstream XFile, LFile, FFile; // файлы точек построения графиков
+	XFile.open("X.txt"); // Точки X
+	LFile.open("L.txt"); // Значения полинома Лагранжа в этих точках
+	FFile.open("F.txt"); // Значения функции в этих точках
 	for (int i = 0; i < Mviz - 1; i++) {
 		XFile << X[i] << ", ";
 		FFile << f(X[i]) << ", ";
