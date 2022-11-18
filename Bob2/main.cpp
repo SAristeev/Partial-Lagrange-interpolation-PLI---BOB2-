@@ -2,7 +2,7 @@
 #include <fstream>
 
 double f(double x) {
-	return pow(x - 1, 4) + pow(x - 3, 3) + pow(x - 2, 2) + 100 * sin(x);
+	return pow(x - 1, 4) + pow(x - 3, 3) + pow(x - 2, 2) + 200 * sin(10*x);
 }
 // K интервалов
 // На каждом интервале степень полинома Лагранжа N
@@ -133,20 +133,34 @@ int main(){
 	meshFile.close();
 	FmeshFile.close();
 
-	std::ofstream XFile, LFile, FFile; // файлы точек построения графиков
+	std::ofstream XFile, LFile, FFile, KFile, KFFile; // файлы точек построения графиков
 	XFile.open("X.txt"); // Точки X
 	LFile.open("L.txt"); // Значения полинома Лагранжа в этих точках
 	FFile.open("F.txt"); // Значения функции в этих точках
+	KFile.open("K.txt"); // Значения функции в этих точках
+	KFFile.open("KF.txt"); // Значения функции в этих точках
 	for (int i = 0; i < Mviz - 1; i++) {
 		XFile << X[i] << ", ";
 		FFile << f(X[i]) << ", ";
 		LFile << L[i] << ", ";
 	}
+	for (int i = 0; i < K - 1; i++) {
+		KFile << mesh[i * (N - 1)] << ", ";
+	}
+	for (int i = 0; i < K - 1; i++) {
+		KFFile << f(mesh[i * (N - 1)]) << ", ";
+	}
 	XFile << X[Mviz - 1] << std::endl;
 	FFile << f(X[Mviz - 1]) << std::endl;
 	LFile << L[Mviz - 1] << std::endl;
+	KFile << mesh[M - 1] << std::endl;
+	KFFile << f(mesh[M - 1]) << std::endl;
+
 	XFile.close();
+	FFile.close();
 	LFile.close();
+	KFile.close();
+	KFFile.close();
 	
 	std::system("python plot.py"); // эта команда вызывает командную строку и включает питоновскую часть задачи
 
