@@ -15,7 +15,7 @@
     </Filter>
   </ItemGroup>
   <ItemGroup>
-    <ClCompile Include="main.cpp">
+    <ClCompile Include="Partial Lagrange interpolation %28PLI - BOB2%29.cpp">
       <Filter>Source Files</Filter>
     </ClCompile>
   </ItemGroup>
