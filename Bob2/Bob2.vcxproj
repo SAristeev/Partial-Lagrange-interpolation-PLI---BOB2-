@@ -24,6 +24,7 @@
     <ProjectGuid>{7b554ab2-375f-4f26-922d-7747d3b6a3f0}</ProjectGuid>
     <RootNamespace>Bob2</RootNamespace>
     <WindowsTargetPlatformVersion>10.0</WindowsTargetPlatformVersion>
+    <ProjectName>Partial Lagrange interpolation (PLI - BOB2)</ProjectName>
   </PropertyGroup>
   <Import Project="$(VCTargetsPath)\Microsoft.Cpp.Default.props" />
   <PropertyGroup Condition="'$(Configuration)|$(Platform)'=='Debug|Win32'" Label="Configuration">

@@ -1,4 +1,5 @@
 #include <iostream>
+#include <iomanip>
 #include <fstream>
 
 double f(double x) {
@@ -28,9 +29,8 @@ int main(){
 		X[i] = a + i * (b - a) / (Mviz - 1); // заполняем точки, по которым строим график
 	}
 	// Residual - остаток
-	double resABS_1norm = 0, resABS_2norm = 0, resABS_infnorm = 0; // абсолютная погрешность в L1, L2 и Linf нормах
-	double resREL_1norm = 0, resREL_2norm = 0, resREL_infnorm = 0; // относительная погрешность в L1, L2 и Linf нормах
-	double f_1norm = 0, f_2norm = 0, f_infnorm = 0; // относительная погрешность = абсоютная погрешность \ норма f
+	double e1 = 0, e2 = 0, einf = 0; // абсолютная погрешность в L1, L2 и Linf нормах
+	double f1 = 0, f2 = 0, finf = 0; // относительная погрешность = абсоютная погрешность \ норма f
 
 	int iviz = 0; // Счетчик для массива-графика
 	for (int i = 0; i < K; i++) {
@@ -87,38 +87,55 @@ int main(){
 			// Вычисляем норму аддитивно
 			// То есть я вычисляю норму (в случае L2 только сумму квадратов, корень потом возьму)
 			// На каждом из интервалов и складываем результат
-			resABS_1norm += abs(tmp - f(x)); // L1 норма разницы функции и полинома Лагранжа в точке x
-			f_1norm += abs(f(x)); // L1 норма функции в точке x
+			e1 += abs(tmp - f(x)); // L1 норма разницы функции и полинома Лагранжа в точке x
+			f1 += abs(f(x)); // L1 норма функции в точке x
 
-			resABS_2norm += (tmp - f(x)) * (tmp - f(x)); // Сумма квадратов разницы функции и полинома Лагранжа в точке x
-			f_2norm += f(x) * f(x); // Сумма квадратов функции в точке x
+			e2 += (tmp - f(x)) * (tmp - f(x)); // Сумма квадратов разницы функции и полинома Лагранжа в точке x
+			f2 += f(x) * f(x); // Сумма квадратов функции в точке x
 
-			if (tmp - f(x) > resABS_infnorm) { // Linf - берем максимум, ничего не суммируем
-				resABS_infnorm = tmp - f(x); // разница функции и полинома Лагранжа в точке x
+			if (tmp - f(x) > einf) { // Linf - берем максимум, ничего не суммируем
+				einf = tmp - f(x); // разница функции и полинома Лагранжа в точке x
 			}
-			if (f(x) > f_infnorm) {
-				f_infnorm = f(x); // функция 
+			if (f(x) > finf) {
+				finf = f(x); // функция 
 			}
 		}
 	}
 
-	resABS_2norm = sqrt(resABS_2norm); // Теперь берем корень из суммы квадратов - L2 норма для разницы функции и полинома Лагранжа в точке x
-	f_2norm = sqrt(f_2norm); // L2 норма для функции
+	e2 = sqrt(e2); // Теперь берем корень из суммы квадратов - L2 норма для разницы функции и полинома Лагранжа в точке x
+	f2 = sqrt(f2); // L2 норма для функции
 
 	// относительная погрешность = абсоютная погрешность \ норма f
-
-	resREL_1norm = resABS_1norm / f_1norm;
-	resREL_2norm = resABS_2norm / f_2norm;
-	resREL_infnorm = resABS_infnorm / f_infnorm;
 
 
 	// Запись в файлы
 
+	std::ofstream ResudialFile; // файл параметров - в нем a,b и все нормы
+	ResudialFile.open("Resudial.txt");
+	ResudialFile << std::setiosflags(std::ios_base::scientific);
+	ResudialFile << "|----------------|--------------|--------------|--------------|" << std::endl;
+	ResudialFile << "|      mesh      |    ||*||1    |    ||*||2    |   ||*||inf   |" << std::endl;
+	ResudialFile << "|----------------|--------------|--------------|--------------|" << std::endl;
+
+	ResudialFile << "|  h / 100 | abs | "
+		<< e1 << " | "
+		<< e2 << " | "
+		<< einf << " |" << std::endl;
+	ResudialFile << "|----------|-----|--------------|--------------|--------------|" << std::endl;
+
+	ResudialFile << "|          | rel | "
+		<< e1 / f1 << " | "
+		<< e2 / f2 << " | "
+		<< einf / finf << " |" << std::endl;
+	ResudialFile << "|----------|-----|--------------|--------------|--------------|" << std::endl;
+	ResudialFile.close();
+
+
 	std::ofstream ParamsFile; // файл параметров - в нем a,b и все нормы
 	ParamsFile.open("Params.txt");
 	ParamsFile << a << ", " << b << ", "
-		<< resREL_1norm << ", " << resREL_2norm << ", " << resREL_infnorm << ", "
-		<< resABS_1norm << ", " << resABS_2norm << ", " << resABS_infnorm << std::endl;
+		<< e1 / f1 << ", " << f2 / e2 << ", " << einf / finf << ", "
+		<< e1 << ", " << e2 << ", " << einf << std::endl;
 	ParamsFile.close();
 
 	std::ofstream meshFile, FmeshFile; // файлы точек интерполяции и значения функции в этих точках - для выделения красным
@@ -133,36 +150,37 @@ int main(){
 	meshFile.close();
 	FmeshFile.close();
 
-	std::ofstream XFile, LFile, FFile, KFile, KFFile; // файлы точек построения графиков
+	std::ofstream XFile, LFile, FFile; // файлы точек построения графиков
 	XFile.open("X.txt"); // Точки X
 	LFile.open("L.txt"); // Значения полинома Лагранжа в этих точках
 	FFile.open("F.txt"); // Значения функции в этих точках
-	KFile.open("K.txt"); // Значения функции в этих точках
-	KFFile.open("KF.txt"); // Значения функции в этих точках
 	for (int i = 0; i < Mviz - 1; i++) {
 		XFile << X[i] << ", ";
 		FFile << f(X[i]) << ", ";
 		LFile << L[i] << ", ";
 	}
+	XFile << X[Mviz - 1] << std::endl;
+	FFile << f(X[Mviz - 1]) << std::endl;
+	LFile << L[Mviz - 1] << std::endl;
+	XFile.close();
+	FFile.close();
+	LFile.close();
+
+	std::ofstream KFile, KFFile;
+	KFile.open("K.txt"); // Значения функции в этих точках
+	KFFile.open("KF.txt"); // Значения функции в этих точках
 	for (int i = 0; i < K - 1; i++) {
 		KFile << mesh[i * (N - 1)] << ", ";
 	}
 	for (int i = 0; i < K - 1; i++) {
 		KFFile << f(mesh[i * (N - 1)]) << ", ";
 	}
-	XFile << X[Mviz - 1] << std::endl;
-	FFile << f(X[Mviz - 1]) << std::endl;
-	LFile << L[Mviz - 1] << std::endl;
 	KFile << mesh[M - 1] << std::endl;
 	KFFile << f(mesh[M - 1]) << std::endl;
-
-	XFile.close();
-	FFile.close();
-	LFile.close();
 	KFile.close();
 	KFFile.close();
 	
 	std::system("python plot.py"); // эта команда вызывает командную строку и включает питоновскую часть задачи
-
+	std::system("del /s /q Params.txt X.txt F.txt L.txt mesh.txt Fmesh.txt K.txt KF.txt");
 	return 0;
 }

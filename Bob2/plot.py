@@ -13,12 +13,11 @@ F = np.genfromtxt("F.txt", delimiter=",") # читаем массив значе
 K = np.genfromtxt("K.txt", delimiter=",") # читаем массив значений функции в этих точках
 KF = np.genfromtxt("KF.txt", delimiter=",") # читаем массив значений границ
 
-plt.figure(figsize=(16*2, 9*2)) # 16 на 9 - соотношение экрана, умножить на 2 - увеличиваю картинку
+plt.figure(figsize=(16 * 2, 9 * 2), dpi = 80) # 16 на 9 - соотношение экрана, умножить на 2 - увеличиваю картинку
 plt.xlim([Params[0], Params[1]]) # рисуем график на отрезке [a,b]
 plt.plot(X,F, color = 'C0', label = "f(x)") # рисуем график функции
 plt.scatter(mesh,Fmesh, color = 'red', s = 8) # выделяем красным точки интерополяции
-plt.scatter(K,KF, color = 'blue', s = 16) # выделяем красным точки интерополяции
-#label добавляет описание в легенду
+plt.scatter(K,KF, color = 'blue', s = 16) # выделяем синим границы отрезков
 plt.plot(X,L, color = 'C1', label = 'L(x)') # рисуем график полинома Лагранжа
 plt.ylabel('y') # подписываем ось x
 plt.xlabel('x') # подписываем ось y
