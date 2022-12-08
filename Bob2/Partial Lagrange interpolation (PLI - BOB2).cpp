@@ -1,9 +1,6 @@
 #define _CRT_SECURE_NO_WARNINGS // для fopen в visual studio
 #include <cmath>
 #include <cstdio>
-#include <iostream>
-#include <iomanip>
-#include <fstream>
 
 double f(double x) {
 	return pow(x - 1, 4) + pow(x - 3, 3) + pow(x - 2, 2) + 200 * sin(10*x);
